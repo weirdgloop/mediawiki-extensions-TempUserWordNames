@@ -72,19 +72,20 @@ class TempUserWordNamesSerialMapping implements SerialMapping {
             $words = $listConfig[ 'words' ];
         } else if ( isset( $listConfig[ 'page' ] ) ) {
             $pageName = $listConfig[ 'page' ];
-            $centralWiki = $this->config->get( 'TempUserWordNamesCentralWiki' );
+            $targetWiki = $this->config->get( 'TempUserWordNamesCentralWiki' )
+				?? $this->config->get( MainConfigNames::DBname );
 
             $words = $this->objectCache->getWithSetCallback(
                 $this->objectCache->makeGlobalKey( 'tempuserwordnames', 'words' ),
                 ExpirationAwareness::TTL_HOUR,
-                function () use ( $pageName, $centralWiki ) {
+                function () use ( $pageName, $targetWiki ) {
 					// Note: we have no idea what the remote namespaces are at this point, so hopefully they match ours
-					$centralWikiIsCurrentWiki = $centralWiki === $this->config->get( MainConfigNames::DBname );
+					$targetWikiIsCurrentWiki = $targetWiki === $this->config->get( MainConfigNames::DBname );
 					$page = $this->pageStoreFactory
-						->getPageStore( $centralWikiIsCurrentWiki ? WikiAwareEntity::LOCAL : $centralWiki )
+						->getPageStore( $targetWikiIsCurrentWiki ? WikiAwareEntity::LOCAL : $targetWiki )
 						->getPageByText( $pageName );
                     $rev = $this->revisionStoreFactory
-						->getRevisionStore($centralWikiIsCurrentWiki ? WikiAwareEntity::LOCAL : $centralWiki )
+						->getRevisionStore($targetWikiIsCurrentWiki ? WikiAwareEntity::LOCAL : $targetWiki )
                         ->getRevisionByTitle( $page );
                     $content = $rev?->getContent( SlotRecord::MAIN );
                     if ( !$content ) {
