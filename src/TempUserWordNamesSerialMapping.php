@@ -76,7 +76,7 @@ class TempUserWordNamesSerialMapping implements SerialMapping {
 				?? $this->config->get( MainConfigNames::DBname );
 
             $words = $this->objectCache->getWithSetCallback(
-                $this->objectCache->makeGlobalKey( 'tempuserwordnames', 'words' ),
+                $this->objectCache->makeGlobalKey( 'tempuserwordnames', $targetWiki, 'words' ),
                 ExpirationAwareness::TTL_HOUR,
                 function () use ( $pageName, $targetWiki ) {
 					// Note: we have no idea what the remote namespaces are at this point, so hopefully they match ours
