@@ -13,8 +13,8 @@ use MediaWiki\Revision\RevisionStoreFactory;
 use MediaWiki\Revision\SlotRecord;
 use MediaWiki\User\TempUser\SerialMapping;
 use Psr\Log\LoggerInterface;
-use WANObjectCache;
 use Wikimedia\LightweightObjectStore\ExpirationAwareness;
+use Wikimedia\ObjectCache\WANObjectCache;
 
 class TempUserWordNamesSerialMapping implements SerialMapping {
     private LoggerInterface $logger;
