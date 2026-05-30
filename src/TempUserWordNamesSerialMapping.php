@@ -59,42 +59,10 @@ class TempUserWordNamesSerialMapping implements SerialMapping {
         }
 
         $words = [];
-
         if ( isset( $listConfig[ 'words' ] ) ) {
             $words = $listConfig[ 'words' ];
         } else if ( isset( $listConfig[ 'page' ] ) ) {
-            $pageName = $listConfig[ 'page' ];
-            $targetWiki = $this->config->get( 'TempUserWordNamesCentralWiki' )
-				?? $this->config->get( MainConfigNames::DBname );
-
-            $words = $this->objectCache->getWithSetCallback(
-                $this->objectCache->makeGlobalKey( 'tempuserwordnames', $targetWiki, 'words' ),
-                ExpirationAwareness::TTL_HOUR,
-                function () use ( $pageName, $targetWiki ) {
-					// Note: we have no idea what the remote namespaces are at this point, so hopefully they match ours
-					$targetWikiIsCurrentWiki = $targetWiki === $this->config->get( MainConfigNames::DBname );
-					$page = $this->pageStoreFactory
-						->getPageStore( $targetWikiIsCurrentWiki ? WikiAwareEntity::LOCAL : $targetWiki )
-						->getPageByText( $pageName );
-                    $rev = $this->revisionStoreFactory
-						->getRevisionStore( $targetWikiIsCurrentWiki ? WikiAwareEntity::LOCAL : $targetWiki )
-                        ->getRevisionByTitle( $page );
-                    $content = $rev?->getContent( SlotRecord::MAIN );
-                    if ( !$content ) {
-                        $this->logger->warning( "No main slot on configured wiki page: $pageName" );
-                        return false;
-                    }
-
-                    $text = ( $content instanceof TextContent ) ? $content->getText() : '';
-                    if ( !$text ) {
-                        $this->logger->warning( "Empty content on configured wiki page: $pageName" );
-                        return false;
-                    }
-
-                    return array_map( 'trim', explode( "\n", $text ) );
-                }
-            );
-
+            $words = $this->fetchWordListFromPage( $listConfig[ 'page' ] );
             if ( empty( $words ) ) {
                 $this->logger->warning( "Configured word list is empty. Using fallback list." );
                 $words = self::DEFAULT_WORDS;
@@ -108,6 +76,56 @@ class TempUserWordNamesSerialMapping implements SerialMapping {
         }
 
         return $words;
+    }
+
+    /**
+     * Fetch the word list from the configured wiki page, caching the result.
+     *
+     * @param string $pageName
+     * @return string[]|false List of words, or false when the page has no usable content.
+     */
+    private function fetchWordListFromPage( string $pageName ) {
+        $targetWiki = $this->config->get( 'TempUserWordNamesCentralWiki' )
+            ?? $this->config->get( MainConfigNames::DBname );
+
+        return $this->objectCache->getWithSetCallback(
+            $this->objectCache->makeGlobalKey( 'tempuserwordnames', $targetWiki, 'words' ),
+            ExpirationAwareness::TTL_HOUR,
+            fn () => $this->readWordListFromPage( $pageName, $targetWiki )
+        );
+    }
+
+    /**
+     * Read the word list from a wiki page on the given wiki.
+     *
+     * @param string $pageName
+     * @param string $targetWiki
+     * @return string[]|false List of words, or false when the page has no usable content.
+     */
+    private function readWordListFromPage( string $pageName, string $targetWiki ) {
+        // Note: we have no idea what the remote namespaces are at this point, so hopefully they match ours
+        $targetWikiIsCurrentWiki = $targetWiki === $this->config->get( MainConfigNames::DBname );
+        $wikiId = $targetWikiIsCurrentWiki ? WikiAwareEntity::LOCAL : $targetWiki;
+
+        $page = $this->pageStoreFactory
+            ->getPageStore( $wikiId )
+            ->getPageByText( $pageName );
+        $rev = $this->revisionStoreFactory
+            ->getRevisionStore( $wikiId )
+            ->getRevisionByTitle( $page );
+        $content = $rev?->getContent( SlotRecord::MAIN );
+        if ( !$content ) {
+            $this->logger->warning( "No main slot on configured wiki page: $pageName" );
+            return false;
+        }
+
+        $text = ( $content instanceof TextContent ) ? $content->getText() : '';
+        if ( !$text ) {
+            $this->logger->warning( "Empty content on configured wiki page: $pageName" );
+            return false;
+        }
+
+        return array_map( 'trim', explode( "\n", $text ) );
     }
 
     public function getSerialIdForIndex( int $index ): string {
