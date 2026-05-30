@@ -32,10 +32,10 @@ class TempUserWordNamesSerialMapping implements SerialMapping {
         'Silly', 'Red', 'Yellow', 'Green', 'Blue', 'Orange', 'Purple', 'Pink', 'Cyan', 'Magenta', 'Fluorescent'
     ];
 
-    private int $offset;
-    private int $numWords;
-    private array $words = [];
-    private bool $useIndex;
+    private readonly int $offset;
+    private readonly int $numWords;
+    private readonly array $words;
+    private readonly bool $useIndex;
 
     public function __construct(
         array $config,
