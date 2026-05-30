@@ -84,7 +84,7 @@ class TempUserWordNamesSerialMapping implements SerialMapping {
      * @param string $pageName
      * @return string[]|false List of words, or false when the page has no usable content.
      */
-    private function fetchWordListFromPage( string $pageName ) {
+    private function fetchWordListFromPage( string $pageName ): array|false {
         $targetWiki = $this->config->get( 'TempUserWordNamesCentralWiki' )
             ?? $this->config->get( MainConfigNames::DBname );
 
@@ -102,7 +102,7 @@ class TempUserWordNamesSerialMapping implements SerialMapping {
      * @param string $targetWiki
      * @return string[]|false List of words, or false when the page has no usable content.
      */
-    private function readWordListFromPage( string $pageName, string $targetWiki ) {
+    private function readWordListFromPage( string $pageName, string $targetWiki ): array|false {
         // Note: we have no idea what the remote namespaces are at this point, so hopefully they match ours
         $targetWikiIsCurrentWiki = $targetWiki === $this->config->get( MainConfigNames::DBname );
         $wikiId = $targetWikiIsCurrentWiki ? WikiAwareEntity::LOCAL : $targetWiki;
