@@ -17,11 +17,7 @@ use Wikimedia\LightweightObjectStore\ExpirationAwareness;
 use Wikimedia\ObjectCache\WANObjectCache;
 
 class TempUserWordNamesSerialMapping implements SerialMapping {
-    private LoggerInterface $logger;
-    private Config $config;
-    private WANObjectCache $objectCache;
-    private RevisionStoreFactory $revisionStoreFactory;
-	private PageStoreFactory $pageStoreFactory;
+    private readonly LoggerInterface $logger;
 
     /** @var string[] */
     private const DEFAULT_WORDS = [
@@ -38,22 +34,18 @@ class TempUserWordNamesSerialMapping implements SerialMapping {
     private readonly bool $useIndex;
 
     public function __construct(
-        array $config,
-        Config $mainConfig,
-        WANObjectCache $objectCache,
-        RevisionStoreFactory $revisionStoreFactory,
-		PageStoreFactory $pageStoreFactory
+        array $serialMappingConfig,
+        private readonly Config $config,
+        private readonly WANObjectCache $objectCache,
+        private readonly RevisionStoreFactory $revisionStoreFactory,
+		private readonly PageStoreFactory $pageStoreFactory
     ) {
         $this->logger = LoggerFactory::getInstance( 'TempUserWordNames' );
-        $this->config = $mainConfig;
-        $this->objectCache = $objectCache;
-        $this->revisionStoreFactory = $revisionStoreFactory;
-		$this->pageStoreFactory = $pageStoreFactory;
 
-        $this->offset = $config['offset'] ?? 0;
-        $this->numWords = $mainConfig->get( 'TempUserWordNamesLength' );
+        $this->offset = $serialMappingConfig['offset'] ?? 0;
+        $this->numWords = $this->config->get( 'TempUserWordNamesLength' );
         $this->words = $this->loadWordList();
-        $this->useIndex = $mainConfig->get( 'TempUserWordNamesUseIndex' );
+        $this->useIndex = $this->config->get( 'TempUserWordNamesUseIndex' );
     }
 
     public function getWordList(): array {
