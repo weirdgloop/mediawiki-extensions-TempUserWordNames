@@ -19,7 +19,6 @@ use Wikimedia\ObjectCache\WANObjectCache;
 class TempUserWordNamesSerialMapping implements SerialMapping {
     private readonly LoggerInterface $logger;
 
-    /** @var string[] */
     private const DEFAULT_WORDS = [
         'Apple', 'Banana', 'Cherry', 'Grape', 'Peach', 'Pear', 'Strawberry', 'Watermelon', 'Apricot', 'Blueberry',
         'Orange', 'Tomato', 'Plum', 'Lime', 'Lemon', 'Bread', 'Egg', 'Fish', 'Garlic', 'Sugar', 'Bagel', 'Tofu',
