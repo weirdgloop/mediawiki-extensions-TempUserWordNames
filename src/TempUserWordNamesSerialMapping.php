@@ -24,7 +24,7 @@ class TempUserWordNamesSerialMapping implements SerialMapping {
 	private PageStoreFactory $pageStoreFactory;
 
     /** @var string[] */
-    private array $defaultWords = [
+    private const DEFAULT_WORDS = [
         'Apple', 'Banana', 'Cherry', 'Grape', 'Peach', 'Pear', 'Strawberry', 'Watermelon', 'Apricot', 'Blueberry',
         'Orange', 'Tomato', 'Plum', 'Lime', 'Lemon', 'Bread', 'Egg', 'Fish', 'Garlic', 'Sugar', 'Bagel', 'Tofu',
         'Muffin', 'Cake', 'Perfect', 'Cheerful', 'Generous', 'Friendly', 'Happy', 'Important', 'Great', 'Real',
@@ -52,15 +52,15 @@ class TempUserWordNamesSerialMapping implements SerialMapping {
 
         $this->offset = $config['offset'] ?? 0;
         $this->numWords = $mainConfig->get( 'TempUserWordNamesLength' );
-        $this->words = $this->getWordList();
+        $this->words = $this->loadWordList();
         $this->useIndex = $mainConfig->get( 'TempUserWordNamesUseIndex' );
     }
 
     public function getWordList(): array {
-        if ( !empty( $this->words ) ) {
-            return $this->words;
-        }
+        return $this->words;
+    }
 
+    private function loadWordList(): array {
         $listConfig = $this->config->get( 'TempUserWordNamesList' );
         if ( !$listConfig ) {
             throw new InvalidArgumentException( '$wgTempUserNamesList must be defined!' );
@@ -85,7 +85,7 @@ class TempUserWordNamesSerialMapping implements SerialMapping {
 						->getPageStore( $targetWikiIsCurrentWiki ? WikiAwareEntity::LOCAL : $targetWiki )
 						->getPageByText( $pageName );
                     $rev = $this->revisionStoreFactory
-						->getRevisionStore($targetWikiIsCurrentWiki ? WikiAwareEntity::LOCAL : $targetWiki )
+						->getRevisionStore( $targetWikiIsCurrentWiki ? WikiAwareEntity::LOCAL : $targetWiki )
                         ->getRevisionByTitle( $page );
                     $content = $rev?->getContent( SlotRecord::MAIN );
                     if ( !$content ) {
@@ -105,17 +105,16 @@ class TempUserWordNamesSerialMapping implements SerialMapping {
 
             if ( empty( $words ) ) {
                 $this->logger->warning( "Configured word list is empty. Using fallback list." );
-                $words = $this->defaultWords;
+                $words = self::DEFAULT_WORDS;
             }
         }
 
         if ( $this->numWords <= 0 || $this->numWords > count( $words ) ) {
             $this->logger->warning( '$wgTempUserWordNamesLength is less than 1 or more than the length of the list.' .
                 ' Using fallback list.' );
-            $words = $this->defaultWords;
+            $words = self::DEFAULT_WORDS;
         }
 
-        $this->words = $words;
         return $words;
     }
 
